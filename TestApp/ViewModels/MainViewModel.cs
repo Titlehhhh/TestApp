@@ -13,54 +13,17 @@ namespace TestApp.ViewModels
 {
 	public partial class MainViewModel : ObservableObject
 	{
-		private readonly static HttpClient _httpClient = new();
-
-		[ObservableProperty]
-		public partial ImageSource Image1 { get; set; }
-
-		[ObservableProperty]
-		public partial string Image1Uri { get; set; }
-
-		[ObservableProperty]
-		public partial string Image1Status { get; set; }
+		public ImageSlotViewModel Slot1 { get; }
+		public ImageSlotViewModel Slot2 { get; }
+		public ImageSlotViewModel Slot3 { get; }
 
 		public MainViewModel()
 		{
-
+			Slot1 = new("Image 1");
+			Slot2 = new("Image 2");
+			Slot3 = new("Image 3");
 		}
 
-		[RelayCommand]
-		public async Task LoadImage1()
-		{
-			if (string.IsNullOrWhiteSpace(Image1Uri))
-				return;
-
-			if (!Uri.TryCreate(Image1Uri, UriKind.Absolute, out var uri))
-			{
-				//Todo show error
-				return;
-			}
-
-
-
-			var stream = await _httpClient.GetStreamAsync(uri).ConfigureAwait(false);
-			
-			var ms = new MemoryStream();
-			await stream.CopyToAsync(ms);
-			ms.Position = 0;
-
-			BitmapImage img = new();
-			img.BeginInit();
-			img.StreamSource = ms;
-			img.CacheOption = BitmapCacheOption.OnLoad;
-			img.EndInit();
-			img.Freeze();
-
-			Dispatcher.CurrentDispatcher.Invoke(() =>
-			{
-				Image1 = img;
-				Image1Status = $"Loaded {uri}";
-			});
-		}
+		
 	}
 }
