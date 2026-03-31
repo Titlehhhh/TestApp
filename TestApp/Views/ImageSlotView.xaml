@@ -4,8 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TestApp.Views"
+             xmlns:convs="clr-namespace:TestApp.Converters"
              mc:Ignorable="d"              
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <convs:NullToVisibilityConverter x:Key="NullToVis"/>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -17,13 +22,19 @@
         <Border BorderBrush="Gray" BorderThickness="1">
 
             <Grid>
-                <Image Source="{Binding Image}"/>
+                <Image 
+                    Source="{Binding Image}"
+                    RenderOptions.BitmapScalingMode="LowQuality"/>
+                <ProgressBar 
+                    IsIndeterminate="True"
+                    Visibility="{Binding LoadCommand.IsRunning, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock 
-                FontStyle="Italic"
-                Foreground="Gray"
-                Text="{Binding Name}"
-                HorizontalAlignment="Center" 
-                VerticalAlignment="Center"/>
+                    Visibility="{Binding Image, Converter={StaticResource NullToVis}}"
+                    FontStyle="Italic"
+                    Foreground="Gray"
+                    Text="{Binding Name}"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
@@ -31,17 +42,21 @@
             Margin="0,10"
             Grid.Row="1">
             <TextBlock Text="Url:"/>
-            <TextBox/>
+            <TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBlock 
+                Foreground="Red"
+                Text="{Binding Error}"
+                Visibility="{Binding Error, Converter={StaticResource NullToVis}}"/>
         </StackPanel>
 
 
         <Button 
-            Command="{Binding StartCommand}"
+            Command="{Binding LoadCommand}"
             Margin="0,10"
             Content="Start" 
             Grid.Row="2"/>
         <Button 
-            Command="{Binding StopCommand}"
+            Command="{Binding LoadCancelCommand}"
             Margin="0,10"
             Content="Stop" 
             Grid.Row="3"/>
