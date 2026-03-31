@@ -24,64 +24,62 @@ namespace TestApp.Services
 		{
 			progress?.Report(0.0);
 			var quality = Quality;
-			Debug.WriteLine($"Starting download with network quality: {quality}");
-			using var response =
-				await httpClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
 
-			response.EnsureSuccessStatusCode();
+			const int maxAttempts = 3;
+			HttpResponseMessage? response = null;
+
+			for (var attempt = 0; attempt < maxAttempts; attempt++)
+			{
+				try
+				{
+					response = await httpClient
+						.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+						.ConfigureAwait(false);
+					break;
+				}
+				catch (OperationCanceledException)
+				{
+					throw;
+				}
+				catch (HttpRequestException ex) when (ex.HttpRequestError == HttpRequestError.ConnectionError)
+				{
+					Debug.WriteLine($"Connection error on attempt {attempt + 1}: {ex.Message}");
+
+					if (attempt == maxAttempts - 1)
+						throw;
+
+					await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), cancellationToken);
+				}
+			}
+
+			response!.EnsureSuccessStatusCode();
 
 			var length = response.Content.Headers.ContentLength;
 
-			if (length <= 0)
-			{
-				throw new InvalidOperationException("Content length is not specified.");
-			}
+			using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
+			using var ms = new MemoryStream();
 
 			var buffer = ArrayPool<byte>.Shared.Rent(1024 * 64);
-
-			var ms = new MemoryStream();
-			using var source =
-				await response.Content.ReadAsStreamAsync(cancellationToken);
-
-			
 			try
 			{
-				while (true)
+				int read;
+				while ((read = await source.ReadAsync(buffer.AsMemory(0, 1024 * 64), cancellationToken)) > 0)
 				{
-					var read = await source.ReadAsync(buffer.AsMemory(0, 1024 * 64), cancellationToken);
-
-					await RandomTimeout(quality);
-
-					if (read <= 0)
-					{
-						break;
-					}
-
 					ms.Write(buffer, 0, read);
+					await RandomTimeout(quality, cancellationToken);
 
-					if (progress is not null)
-					{
-						if (length > 0)
-						{
-							double progressValue = (double)ms.Length / length.Value;
-							progress.Report(progressValue);
-						}
-						else
-						{
-							progress.Report(0.0);
-						}
-					}
+					if (length.HasValue)
+						progress?.Report((double)ms.Length / length.Value);
 				}
 			}
 			finally
 			{
 				ArrayPool<byte>.Shared.Return(buffer);
+				response.Dispose();
 			}
 
 			progress?.Report(1.0);
 			ms.Position = 0;
-
-
 
 			var bitmap = new BitmapImage();
 			bitmap.BeginInit();
@@ -93,26 +91,19 @@ namespace TestApp.Services
 			return bitmap;
 		}
 
-		private static async ValueTask RandomTimeout(NetworkQuality quality)
+		private static async ValueTask RandomTimeout(NetworkQuality quality, CancellationToken cancellationToken)
 		{
-			int msTime = 0;
-			if (quality == NetworkQuality.Excellent)
+			var ms = quality switch
 			{
-				return;
-			}
-			else if (quality == NetworkQuality.High)
-			{
-				msTime = Random.Shared.Next(100, 500);
-			}
-			else if (quality == NetworkQuality.Medium)
-			{
-				msTime = Random.Shared.Next(500, 1500);
-			}
-			else if (quality == NetworkQuality.Low)
-			{
-				msTime = Random.Shared.Next(1500, 3000);
-			}
-			await Task.Delay(msTime);
+				NetworkQuality.Excellent => 0,
+				NetworkQuality.High => Random.Shared.Next(100, 500),
+				NetworkQuality.Medium => Random.Shared.Next(500, 1500),
+				NetworkQuality.Low => Random.Shared.Next(1500, 3000),
+				_ => 0
+			};
+
+			if (ms > 0)
+				await Task.Delay(ms, cancellationToken);
 		}
 	}
 }
