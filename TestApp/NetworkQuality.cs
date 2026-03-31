@@ -11,11 +11,4 @@ namespace TestApp
 		High,
 		Excellent
 	}
-
-	public interface IProgressImage 
-	{
-		void OnStartLoad();
-		void OnStopLoad(Exception? exception);
-		void OnCanceled();
-	}
 }
