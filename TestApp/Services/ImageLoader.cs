@@ -58,7 +58,11 @@ namespace TestApp.Services
 
 			using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
 
+
+
 			var ms = new MemoryStream();
+
+			// Можно использовать CopyToAsync, но так мы будем иметь больше контроля над прогрессом и симуляцией сети
 
 			var buffer = ArrayPool<byte>.Shared.Rent(1024 * 64);
 			try
@@ -78,6 +82,7 @@ namespace TestApp.Services
 				ArrayPool<byte>.Shared.Return(buffer);
 				response.Dispose();
 			}
+
 
 			progress?.Report(1.0);
 			ms.Position = 0;
