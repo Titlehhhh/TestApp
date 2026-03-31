@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Diagnostics;
 using System.Windows.Media;
 using TestApp.Services;
 
@@ -27,10 +26,6 @@ namespace TestApp.ViewModels
 		[ObservableProperty]
 		public partial string? Error { get; set; }
 
-		[ObservableProperty]
-		public partial double Progress { get; set; }
-
-
 		[RelayCommand(IncludeCancelCommand = true, FlowExceptionsToTaskScheduler = false)]
 		public async Task Load(CancellationToken cancellationToken)
 		{
@@ -49,16 +44,13 @@ namespace TestApp.ViewModels
 			}
 			_progressImage.OnStartLoad();
 
-			var progress = new Progress<double>(v => Progress = v);
-
 			try
 			{
-				Image = await ImageLoader.LoadAsync(uri, progress, cancellationToken);
+				Image = await ImageLoader.LoadAsync(uri, null, cancellationToken);
 				_progressImage.OnStopLoad(null);
 			}
 			catch (OperationCanceledException)
 			{
-				Progress = 0;
 				_progressImage.OnCanceled();
 			}
 			catch (Exception ex)
