@@ -14,9 +14,8 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel>
-            <TextBlock Text="Качество интернета"/>
+            <TextBlock Margin="10,10,0,0" Text="Качество интернета"/>
             <controls:NetworkQualityControl Quality="{Binding Quality, Mode=TwoWay}" Margin="10"/>
-
         </StackPanel>
 
 
