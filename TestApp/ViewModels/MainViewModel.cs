@@ -22,7 +22,6 @@ namespace TestApp.ViewModels
 					field = value;
 					ImageLoader.Quality = value;
 				}
-
 			}
 		}
 
