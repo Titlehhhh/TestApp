@@ -53,17 +53,13 @@
                 Content="Start All" 
                 Grid.Row="1"
                 Grid.ColumnSpan="3"/>
-            <Grid Margin="10,0,10,10" Grid.Row="2" Grid.ColumnSpan="3">
-                <ProgressBar      
-                    Height="20"                      
-                    Maximum="1" 
-                    Value="{Binding Progress, Mode=OneWay}"/>
-                <TextBlock 
-                    Text="{Binding ProgressText}"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    FontSize="11"/>
-            </Grid>
+            <ProgressBar
+                Margin="10,0,10,10"
+                Grid.Row="2"
+                Grid.ColumnSpan="3"
+                Height="20"
+                Maximum="3"
+                Value="{Binding Progress, Mode=OneWay}"/>
 
 
         </Grid>
