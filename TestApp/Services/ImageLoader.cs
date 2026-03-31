@@ -57,7 +57,8 @@ namespace TestApp.Services
 			var length = response.Content.Headers.ContentLength;
 
 			using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
-			using var ms = new MemoryStream();
+
+			var ms = new MemoryStream();
 
 			var buffer = ArrayPool<byte>.Shared.Rent(1024 * 64);
 			try
