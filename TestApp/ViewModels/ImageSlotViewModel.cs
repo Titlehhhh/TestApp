@@ -58,6 +58,7 @@ namespace TestApp.ViewModels
 			}
 			catch (OperationCanceledException)
 			{
+				Progress = 0;
 				_progressImage.OnCanceled();
 			}
 			catch (Exception ex)

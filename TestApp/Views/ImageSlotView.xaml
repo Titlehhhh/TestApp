@@ -22,19 +22,19 @@
         <Border BorderBrush="Gray" BorderThickness="1">
 
             <Grid>
+                <TextBlock                     
+                    FontStyle="Italic"
+                    Foreground="Gray"
+                    Text="{Binding Name}"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"/>
                 <Image 
                     Source="{Binding Image}"
                     RenderOptions.BitmapScalingMode="LowQuality"/>
                 <ProgressBar 
                     IsIndeterminate="True"
                     Visibility="{Binding LoadCommand.IsRunning, Converter={StaticResource BoolToVis}}"/>
-                <TextBlock 
-                    Visibility="{Binding Image, Converter={StaticResource NullToVis}}"
-                    FontStyle="Italic"
-                    Foreground="Gray"
-                    Text="{Binding Name}"
-                    HorizontalAlignment="Center" 
-                    VerticalAlignment="Center"/>
+                
             </Grid>
         </Border>
 
