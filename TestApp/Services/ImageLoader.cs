@@ -27,46 +27,58 @@ namespace TestApp.Services
 
 			const int maxAttempts = 3;
 			HttpResponseMessage? response = null;
-
-			for (var attempt = 0; attempt < maxAttempts; attempt++)
+			try
 			{
-				try
+				for (var attempt = 0; attempt < maxAttempts; attempt++)
 				{
-					response = await httpClient
-						.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-						.ConfigureAwait(false);
-					break;
-				}
-				catch (OperationCanceledException)
-				{
-					throw;
-				}
-				catch (HttpRequestException ex) when (ex.HttpRequestError == HttpRequestError.ConnectionError)
-				{
-					Debug.WriteLine($"Connection error on attempt {attempt + 1}: {ex.Message}");
-
-					if (attempt == maxAttempts - 1)
+					try
+					{
+						response = await httpClient
+							.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+							.ConfigureAwait(false);
+						break;
+					}
+					catch (OperationCanceledException)
+					{
 						throw;
+					}
+					catch (HttpRequestException ex) when (ex.HttpRequestError == HttpRequestError.ConnectionError)
+					{
+						Debug.WriteLine($"Connection error on attempt {attempt + 1}: {ex.Message}");
 
-					await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), cancellationToken);
+						if (attempt == maxAttempts - 1)
+							throw;
+
+						await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), cancellationToken);
+					}
 				}
-			}
 
-			response!.EnsureSuccessStatusCode();
+				response!.EnsureSuccessStatusCode();
+
+				return await ReadBitmap(response, quality, progress, cancellationToken);
+			}
+			finally
+			{
+				response?.Dispose();
+			}
+		}
+
+		private static async Task<BitmapImage> ReadBitmap(
+			HttpResponseMessage response,
+			NetworkQuality quality, 
+			IProgress<double>? progress = null,
+			CancellationToken cancellationToken = default)
+		{
+			using var ms = new MemoryStream();
 
 			var length = response.Content.Headers.ContentLength;
-
 			using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-
-
-			var ms = new MemoryStream();
-
 			// Можно использовать CopyToAsync, но так мы будем иметь больше контроля над прогрессом и симуляцией сети
-
 			var buffer = ArrayPool<byte>.Shared.Rent(1024 * 64);
 			try
 			{
+
 				int read;
 				while ((read = await source.ReadAsync(buffer.AsMemory(0, 1024 * 64), cancellationToken)) > 0)
 				{
@@ -80,9 +92,7 @@ namespace TestApp.Services
 			finally
 			{
 				ArrayPool<byte>.Shared.Return(buffer);
-				response.Dispose();
 			}
-
 
 			progress?.Report(1.0);
 			ms.Position = 0;
